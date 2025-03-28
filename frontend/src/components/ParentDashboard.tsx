@@ -1,29 +1,55 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import { useUser } from '../context/UserContext';
 import { BookOpen, Clock, CheckCircle, AlertCircle, BarChart } from 'lucide-react';
 
-const ParentDashboard = () => {
-  const { user } = useUser();
+// Define types for API response
+interface Subject {
+  name: string;
+  progress: number;
+  attendance: number;
+}
 
-  const children = [
-    {
-      name: 'John Doe',
-      grade: '10th Grade',
-      subjects: [
-        { name: 'Mathematics', progress: 75, attendance: 90 },
-        { name: 'Science', progress: 85, attendance: 95 },
-        { name: 'English', progress: 80, attendance: 88 },
-        { name: 'History', progress: 70, attendance: 92 },
-      ],
-      recentActivities: [
-        { type: 'Test', subject: 'Mathematics', score: 85, date: '2024-03-15' },
-        { type: 'Assignment', subject: 'Science', score: 92, date: '2024-03-14' },
-        { type: 'Quiz', subject: 'English', score: 78, date: '2024-03-13' },
-      ],
-      attendance: 91,
-      overallGrade: 77.5,
-    },
-  ];
+interface Activity {
+  type: string;
+  subject: string;
+  score: number;
+  date: string;
+}
+
+interface Child {
+  id: number;
+  name: string;
+  grade: string;
+  subjects: Subject[];
+  recentActivities: Activity[];
+  attendance: number;
+  overallGrade: number;
+}
+
+const ParentDashboard: React.FC = () => {
+  const { user } = useUser();
+  const [children, setChildren] = useState<Child[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchChildren = async () => {
+      try {
+        const response = await axios.get('https://api.example.com/children'); // Replace with actual API
+        setChildren(response.data);
+      } catch (err) {
+        setError('Failed to fetch data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchChildren();
+  }, []);
+
+  if (loading) return <p className="text-center text-gray-600">Loading...</p>;
+  if (error) return <p className="text-center text-red-600">{error}</p>;
 
   return (
     <div className="min-h-screen bg-gray-50 py-6">
@@ -34,11 +60,9 @@ const ParentDashboard = () => {
         </div>
 
         {children.map((child) => (
-          <div key={child.name} className="mb-12">
+          <div key={child.id} className="mb-12">
             <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                {child.name}
-              </h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">{child.name}</h2>
               <p className="text-gray-600">{child.grade}</p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
@@ -136,6 +160,7 @@ const ParentDashboard = () => {
                 </div>
               </div>
             </div>
+
           </div>
         ))}
       </div>

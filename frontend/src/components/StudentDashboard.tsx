@@ -1,31 +1,63 @@
-import React from 'react';
-import { useUser } from '../context/UserContext';
-import { BookOpen, Clock, CheckCircle, XCircle, BarChart } from 'lucide-react';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { useUser } from "../context/UserContext";
+import { BookOpen, Clock, CheckCircle, XCircle, BarChart } from "lucide-react";
 
-const StudentDashboard = () => {
-  const { user } = useUser();
+// Define TypeScript interfaces for Subjects and Activities
+interface Subject {
+  name: string;
+  progress: number;
+  attendance: number;
+}
 
-  const subjects = [
-    { name: 'Mathematics', progress: 75, attendance: 90 },
-    { name: 'Science', progress: 85, attendance: 95 },
-    { name: 'English', progress: 80, attendance: 88 },
-    { name: 'History', progress: 70, attendance: 92 },
-  ];
+interface Activity {
+  subject: string;
+  type: string;
+  date: string;
+  status: "completed" | "pending";
+}
 
-  const recentActivities = [
-    { type: 'assignment', subject: 'Mathematics', status: 'completed', date: '2024-03-15' },
-    { type: 'test', subject: 'Science', status: 'pending', date: '2024-03-18' },
-    { type: 'quiz', subject: 'English', status: 'completed', date: '2024-03-14' },
-  ];
+const StudentDashboard: React.FC = () => {
+  // const { user } = useUser();
+
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:5000/api/dashboard/${1}`
+        );
+        setSubjects(response.data.subjects);
+        setRecentActivities(response.data.recentActivities);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setError("Failed to load data.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (true) {
+      fetchDashboardData();
+    }
+  }, [1]);
+
+  if (loading) return <p className="text-center text-gray-700">Loading...</p>;
+  if (error) return <p className="text-center text-red-500">{error}</p>;
 
   return (
     <div className="min-h-screen bg-gray-50 py-6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Student Dashboard</h1>
-          <div className="text-sm text-gray-600">Welcome, {user?.email}</div>
+          <div className="text-sm text-gray-600">Welcome, {'ayush1234@gmail.com'}</div>
         </div>
 
+        {/* Dashboard Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-white p-6 rounded-lg shadow">
             <div className="flex items-center">
@@ -36,24 +68,43 @@ const StudentDashboard = () => {
               </div>
             </div>
           </div>
+
           <div className="bg-white p-6 rounded-lg shadow">
             <div className="flex items-center">
               <Clock className="h-8 w-8 text-primary" />
               <div className="ml-4">
                 <h2 className="text-lg font-semibold">Attendance</h2>
-                <p className="text-2xl font-bold">91%</p>
+                <p className="text-2xl font-bold">
+                  {subjects.length
+                    ? (
+                        subjects.reduce((acc, subj) => acc + subj.attendance, 0) /
+                        subjects.length
+                      ).toFixed(1)
+                    : "0"}
+                  %
+                </p>
               </div>
             </div>
           </div>
+
           <div className="bg-white p-6 rounded-lg shadow">
             <div className="flex items-center">
               <BarChart className="h-8 w-8 text-primary" />
               <div className="ml-4">
                 <h2 className="text-lg font-semibold">Average Grade</h2>
-                <p className="text-2xl font-bold">77.5%</p>
+                <p className="text-2xl font-bold">
+                  {subjects.length
+                    ? (
+                        subjects.reduce((acc, subj) => acc + subj.progress, 0) /
+                        subjects.length
+                      ).toFixed(1)
+                    : "0"}
+                  %
+                </p>
               </div>
             </div>
           </div>
+
           <div className="bg-white p-6 rounded-lg shadow">
             <div className="flex items-center">
               <CheckCircle className="h-8 w-8 text-primary" />
@@ -65,6 +116,7 @@ const StudentDashboard = () => {
           </div>
         </div>
 
+        {/* Subject Progress */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="bg-white rounded-lg shadow">
             <div className="p-6">
@@ -92,6 +144,7 @@ const StudentDashboard = () => {
             </div>
           </div>
 
+          {/* Recent Activities */}
           <div className="bg-white rounded-lg shadow">
             <div className="p-6">
               <h2 className="text-xl font-semibold mb-4">Recent Activities</h2>
@@ -102,7 +155,7 @@ const StudentDashboard = () => {
                     className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
                   >
                     <div className="flex items-center">
-                      {activity.status === 'completed' ? (
+                      {activity.status === "completed" ? (
                         <CheckCircle className="h-5 w-5 text-primary" />
                       ) : (
                         <XCircle className="h-5 w-5 text-red-500" />
@@ -116,9 +169,9 @@ const StudentDashboard = () => {
                     </div>
                     <span
                       className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        activity.status === 'completed'
-                          ? 'bg-primary/10 text-primary'
-                          : 'bg-yellow-100 text-yellow-800'
+                        activity.status === "completed"
+                          ? "bg-primary/10 text-primary"
+                          : "bg-yellow-100 text-yellow-800"
                       }`}
                     >
                       {activity.status}
